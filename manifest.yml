@@ -1,17 +1,12 @@
 type: install
-jpsVersion: '1.7.2'
+version: '1.0.0'
 name: WHMCS Multi Cluster
-id: whmcs-multi-cluster
-categories:
-  - apps/clusters
-  - apps/content-management
 description: 
   text: Highly-available and reliable WordPress cluster setup with automatic multi-region distribution. The package creates interconnected WordPress sub clusters across several regions ensuring the highest uptime and lowest latency.
   short: Enterprise-grade WordPress Cluster with automatic distribution across several regions.
 logo: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master/images/82dark-back-01.svg
 baseUrl: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master
 
-onBeforeInit: /scripts/settings.js?_r=${fn.random}
 
 settings:
   fields:
@@ -132,11 +127,14 @@ onInstall:
         db_host: sqldb
         db_async_topology: false      
   - initGlobals
-  - setGlobals:
-      domain: ${settings.envName}-1.${globals.domain-1}
+  # - setGlobals:
+  #     domain: ${settings.envName}-1.${globals.domain-1}
   #- createEnvs    
   #- getEnvNodes
   #- installEnvsManager
+
+  # - log:
+  #     message: ${globals.domain-1}
   
   - if ('${globals.db_async_topology}' == 'true'):  
     - install:
@@ -333,8 +331,8 @@ actions:
         wp_url: ${globals.protocol}://${globals.domain}
         version_wordpress: ${globals.version_wordpress}
   
-success:
-  email: success/email/${globals.regionsCount}-region-${globals.email}.md?_r=${fn.random}
-  text: success/text/${globals.regionsCount}-region-${globals.success}.md?_r=${fn.random}
+#success:
+#  email: success/email/${globals.regionsCount}-region-${globals.email}.md?_r=${fn.random}
+#  text: success/text/${globals.regionsCount}-region-${globals.success}.md?_r=${fn.random}
 
-startPage: ${globals.protocol}://${globals.domain}/
+# startPage: ${globals.protocol}://${globals.domain}/
