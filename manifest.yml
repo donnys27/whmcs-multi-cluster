@@ -1,10 +1,14 @@
 type: install
-jpsVersion: '1.7.2'
+jpsVersion: '1.0.0'
 name: WHMCS Multi Cluster
-
+id: whmcs-mult-cluster
+categories:
+  - apps/clusters
+  - apps/content-management
 description: 
-  short: HA WHMCS Cluster
-#logo: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master/images/82dark-back-01.svg
+  text: Highly-available and reliable WordPress cluster setup with automatic multi-region distribution. The package creates interconnected WordPress sub clusters across several regions ensuring the highest uptime and lowest latency.
+  short: Enterprise-grade WordPress Cluster with automatic distribution across several regions.
+logo: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master/images/82dark-back-01.svg
 baseUrl: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master
 
 onBeforeInit: /scripts/settings.js?_r=${fn.random}
