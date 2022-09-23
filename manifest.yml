@@ -1,7 +1,7 @@
 type: install
 jpsVersion: '1.7.2'
-name: Multi-Region WordPress Cluster v1 (Alpha)
-id: wordpress-cluster-multiregions
+name: WHMCS Multi Cluster
+id: whmcs-multi-cluster
 categories:
   - apps/clusters
   - apps/content-management
@@ -86,51 +86,10 @@ settings:
       showFullDomain: false
       required: true
 
-    - caption: Scaling Strategy
-      type: list
-      name: loadGrowth
-      default: slow
-      required: true
-      width: 225
-      tooltip: | 
-        Configure auto-scaling triggers, i.e. how fast the system responds to load spikes by adding or removing nodes.
-        <p>Read more about <a href="https://docs.jelastic.com/automatic-horizontal-scaling">Automatic Horizontal Scaling</a></p>
-      values:        
-          - value: slow
-            caption: Low Load
-            tooltip: <h2>Low load scaling strategy</h2>add 1 new node when CPU > 70% <p>remove when CPU < 20%</p>
-          - value: medium
-            caption: Medium Load
-            tooltip: <h3>Medium load scaling strategy</h3>add 1 new node when CPU > 50% <p>remove when CPU < 20%</p>
-          - value: fast
-            caption: High Load
-            tooltip: <h3>High load scaling strategy</h3>add 2 new nodes when CPU > 30% <p>remove when CPU < 10%</p>
-
     - caption: Advanced Features
       type: displayfield
       name: displayfield
       markup:
- 
-    - caption: WordPress Brute Force Attack Protection
-      type: checkbox
-      name: wp_protect
-      value: true
-      disabled: false
-      tooltip: "Secure WordPress Admin Panel with <a href='https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:config:wordpress-protection'>LiteSpeed Brute Force Protection</a> that limits failed login attempts. Default action is <b>Throttle</b> and number of allowed attempts is <b>100</b>."
-
-    - caption: Web Application Firewall
-      type: checkbox
-      name: waf
-      value: true
-      disabled: false
-      tooltip: "Protect web sites with <a href='https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:waf'>LiteSpeed built-in WAF</a> based on Free ModSecurity Rules from Comodo."
-
-    - caption: Install Let's Encrypt SSL with Auto-Renewal
-      type: checkbox
-      name: le_addon
-      value: true
-      disabled: false
-      tooltip: "Advanced integration with Let's Encrypt certificate authority that simplifies and automates the process of issuing, configuring and renewing trusted SSL certificates."
 
     - caption: Install Lightning-Fast Premium CDN with 160+ PoPs
       type: checkbox
@@ -138,13 +97,6 @@ settings:
       value: true
       disabled: false
       tooltip: "Jelastic CDN is an HTTP/3 premium content delivery network of 160+ Super PoPs (points of presence) with bandwidth capacity up to 115 Tbps, advanced caching and acceleration strategies based on best-in-class IP Anycast technology."
-
-    - caption: Install WordPress Multisite Network
-      type: checkbox
-      name: mu_addon
-      value: false
-      disabled: false
-      tooltip: "Multisite is a type of WordPress installation that allows you to create and manage a network of multiple websites from a single WordPress dashboard. This lets you easily make changes and keep all of your websites updated from one place."
 
     - type: displayfield
       hideLabel: true
@@ -156,9 +108,8 @@ mixins:
  - https://raw.githubusercontent.com/jelastic-jps/wordpress-cluster/master/configs/vers.yaml
 
 globals:
-  wp_cluster_url: https://raw.githubusercontent.com/jelastic-jps/wordpress-cluster/v3.0.0
   db_cluster_url: https://raw.githubusercontent.com/jelastic-jps/mysql-cluster/v2.4.0
-  galera_server_id: ${fn.random}
+  #galera_server_id: ${fn.random}
   db_user: jelastic-${fn.random}
   db_pass: ${fn.password(10)}
   repl_user: replica-${fn.random}
@@ -166,8 +117,8 @@ globals:
   monitor_user: monitor-${fn.random}
   monitor_pass: ${fn.password(10)}
   protocol: http
-  wp_admin_pass: ${fn.password(10)}
-  ls_admin_pass: ${fn.password(10)}
+  #wp_admin_pass: ${fn.password(10)}
+  #ls_admin_pass: ${fn.password(10)}
   success: default
   email: default
 
@@ -183,9 +134,9 @@ onInstall:
   - initGlobals
   - setGlobals:
       domain: ${settings.envName}-1.${globals.domain-1}
-  - createEnvs    
-  - getEnvNodes
-  - installEnvsManager
+  #- createEnvs    
+  #- getEnvNodes
+  #- installEnvsManager
   
   - if ('${globals.db_async_topology}' == 'true'):  
     - install:
@@ -205,10 +156,10 @@ onInstall:
         settings:
           install_gluster_cluster: true
 
-      - jps: ${baseUrl}/scripts/cacheManager.jps
-        envName: ${globals.master_env_name}
-        settings:
-          setup_cache_replication: true
+      # - jps: ${baseUrl}/scripts/cacheManager.jps
+      #   envName: ${globals.master_env_name}
+      #   settings:
+      #     setup_cache_replication: true
 
   - else:
     - install:
@@ -227,7 +178,7 @@ onInstall:
         settings:
           setup_cache_replication: true
 
-  - install-wordpress
+  #- install-wordpress
   - if (${settings.mu_addon:false}):
     - install: ${globals.wp_cluster_url}/addon/WPMU.jps
       envName: ${globals.master_env_name}
@@ -255,11 +206,11 @@ onInstall:
         skipEmail: true
         settings:
           note: ${settings.noteCDN:}
-  - install:
-      jps: ${baseUrl}/scripts/cacheManager.jps
-      envName: ${globals.master_env_name}
-      settings:
-        clean_cache: true
+  # - install:
+  #     jps: ${baseUrl}/scripts/cacheManager.jps
+  #     envName: ${globals.master_env_name}
+  #     settings:
+  #       clean_cache: true
 
 actions:
 
