@@ -2,11 +2,11 @@ type: install
 version: '1.0.0'
 name: WHMCS Multi Cluster
 description: 
-  text: Highly-available and reliable WordPress cluster setup with automatic multi-region distribution. The package creates interconnected WordPress sub clusters across several regions ensuring the highest uptime and lowest latency.
-  short: Enterprise-grade WordPress Cluster with automatic distribution across several regions.
+  short: HA WHMCS
 logo: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master/images/82dark-back-01.svg
 baseUrl: https://raw.githubusercontent.com/jelastic-jps/wordpress-multiregions/master
 
+onBeforeInit: /scripts/settings.js?_r=${fn.random}
 
 settings:
   fields:
@@ -127,14 +127,12 @@ onInstall:
         db_host: sqldb
         db_async_topology: false      
   - initGlobals
-  # - setGlobals:
-  #     domain: ${settings.envName}-1.${globals.domain-1}
-  #- createEnvs    
-  #- getEnvNodes
-  #- installEnvsManager
+  - setGlobals:
+      domain: ${settings.envName}-1.${globals.domain-1}
+  - createEnvs    
+  - getEnvNodes
+  - installEnvsManager
 
-  # - log:
-  #     message: ${globals.domain-1}
   
   - if ('${globals.db_async_topology}' == 'true'):  
     - install:
@@ -146,7 +144,7 @@ onInstall:
           repl_user: ${globals.repl_user}
           repl_pass: ${globals.repl_pass}
           monitor_user: ${globals.monitor_user}
-          monitor_pass: ${globals.monitor_pass}        
+          monitor_pass: ${globals.monitor_pass} 
           cluster_name: ${settings.envName}
         
       - jps: ${baseUrl}/scripts/geoGlusterManager.jps
@@ -232,10 +230,10 @@ actions:
             }
           }
           if (index == 1) {
-            glbs["displayName-" + index] = "WP Cluster Primary";
+            glbs["displayName-" + index] = "WHMCS Cluster Primary";
             glbs["initial_env_master-" + index] = "true";
           } else {
-            glbs["displayName-" + index] = "WP Cluster Secondary " + i;
+            glbs["displayName-" + index] = "WHMCS Cluster Secondary " + i;
             glbs["initial_env_master-" + index] = "false";
           }
         }
@@ -250,21 +248,15 @@ actions:
         var envGroups = eval('(' + MANIFEST + ')').envGroups;
         for (var cluster = 1, n = regions.length + 1; cluster < n; cluster ++) {
           actions.push({
-            jps: "${globals.wp_cluster_url}/manifest.yml?_r=${fn.random}",
+            jps: "https://github.com/donnys27/whmcs-cluster/blob/main/manifest.yml",
             envName: "${settings.envName}-" + cluster,
             loggerName: "${settings.envName}-" + cluster,
             envGroups: envGroups,
             displayName: "${globals.displayName-" + cluster + "}",
             region: "${globals.region-" + cluster + "}",
             settings: {
-              waf: "${settings.waf}",
-              wp_protect: "${settings.wp_protect}",
-              le_addon: "false",
-              cdn_addon: "false",
-              is_install_wp: "false",
               is_db_cluster: "false",
               bl_count: "1",
-              ls_admin_pass: "${globals.ls_admin_pass}",
               glusterfs: "true",
               galera: "${globals.initial_env_master-" + cluster + "}",
               db_user: "${globals.db_user}",
@@ -331,8 +323,8 @@ actions:
         wp_url: ${globals.protocol}://${globals.domain}
         version_wordpress: ${globals.version_wordpress}
   
-#success:
-#  email: success/email/${globals.regionsCount}-region-${globals.email}.md?_r=${fn.random}
-#  text: success/text/${globals.regionsCount}-region-${globals.success}.md?_r=${fn.random}
+success:
+ email: success/email/${globals.regionsCount}-region-${globals.email}.md?_r=${fn.random}
+ text: success/text/${globals.regionsCount}-region-${globals.success}.md?_r=${fn.random}
 
-# startPage: ${globals.protocol}://${globals.domain}/
+startPage: ${globals.protocol}://${globals.domain}/

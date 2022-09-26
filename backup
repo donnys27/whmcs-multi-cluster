@@ -1,0 +1,192 @@
+{
+    "type": "install",
+    "name": "WHMCS",
+    "engine": "7.0.33",
+    "description": {
+        "text": "WHMCS App"
+    },
+    "ssl": true,
+
+    "settings": {
+        "fields": [{
+            "type": "string",
+            "caption": "DB Username",
+            "name": "dbusername",
+            "required": true
+        }, 
+        {
+            "type": "string",
+            "caption": "DB Password",
+            "name": "dbpassword",
+            "required": true
+        },
+        {
+            "type": "string",
+            "caption": "Registry URL",
+            "name": "registryUrl",
+            "required": true
+        },
+        {
+            "type": "string",
+            "caption": "Registry Username",
+            "name": "registryUser",
+            "required": true
+        }, 
+        {
+            "type": "string",
+            "caption": "Registry Password",
+            "name": "registryPassword",
+            "required": true
+        },
+        {
+            "type": "string",
+            "caption": "Docker Tag",
+            "name": "dockertag",
+            "required": true
+        }, 
+        {
+            "type": "string",
+            "caption": "Allow to HTTPS (specific IP, CIDR, etc)",
+            "name": "allowhttps",
+            "required": "true"
+        }]
+    },
+
+    "logo": "https://www.whmcs.com/assets/images/logos/whmcs-logo-sm-inverse.png",
+
+    "nodes": [
+    {
+        "nodeType": "nginx-dockerized",
+        "nodeGroup": "bl",
+        "fixedCloudlets": 5,
+        "cloudlets": 8,
+        "isSLBAccessEnabled": false
+    },
+    {
+        "nodeType": "docker",
+        "nodeGroup": "cp",
+        "count": 3,
+        "image": "jelastic/nginxphp_1.16.0-php-7.0.33:${settings.dockertag}",
+        "links": [
+            "cache:MEMCACHED",
+            "proxy:PROXYSQL"
+        ],
+        "scalingMode": "STATEFUL",
+        "registry": {
+            "user": "${settings.registryUser}",
+            "password": "${settings.registryPassword}",
+            "url": "${settings.registryUrl}"
+        },
+        "fixedCloudlets": 5,
+        "cloudlets": 8,
+        "env": {
+            "DB_USER": "${settings.dbusername}",
+            "DB_PASS": "${settings.dbpassword}"
+        },
+        "volumes": [
+            "/var/spool/cron"
+        ],
+        "volumeMounts": {
+            "/var/www/webroot": {
+                "protocol": "NFS",
+                "readOnly": false,
+                "sourcePath": "/data/ROOT",
+                "sourceNodeGroup": "storage",
+                "sourceNodeId": "${nodes.storage[0].id}"
+            },
+            "/etc/nginx": {
+                "protocol": "NFS",
+                "readOnly": true,
+                "sourcePath": "/data/nginx",
+                "sourceNodeGroup": "storage",
+                "sourceNodeId": "${nodes.storage[0].id}"
+             },
+             "/var/spool/cron": {
+                 "protocol": "NFS",
+                 "readOnly": false,
+                 "sourcePath": "/data/cron",
+                 "sourceNodeGroup": "storage",
+                 "sourceNodeId": "${nodes.storage[0].id}"
+             }
+        }
+    },
+    {
+        "nodeType": "mariadb-dockerized",
+        "nodeGroup": "sqldb",
+        "tag": "10.3.35",
+        "fixedCloudlets": 5,
+        "cloudlets": 13,
+        "env": {
+            "DB_USER": "${settings.dbusername}",
+            "DB_PASS": "${settings.dbpassword}"
+        },
+        "cluster": {
+            "scheme": "master",
+            "is_proxysql": true,
+            "db_user": "${settings.dbusername}",
+            "db_pass": "${settings.dbpassword}"
+        }
+    }, 
+    {
+        "nodeType": "memcached",
+        "nodeGroup": "cache",
+        "fixedCloudlets": 5,
+        "cloudlets": 8,
+        "scalingMode": "STATEFUL"   
+    },
+    {
+        "nodeType": "storage",
+        "nodeGroup": "storage",
+        "fixedCloudlets": 5,
+        "cloudlets": 8,
+        "cluster": true
+    }],
+
+    "onInstall": {
+        "isSequential": true,
+        "cmd [${nodes.storage[0].id}]": [
+            "touch /data/cron/nginx",
+            "echo '#* * * * * /usr/bin/php -q /var/www/webroot/ROOT/croncount.php \n #* * * * * /usr/bin/php -q /var/www/webroot/ROOT/croncount.php \n' >> /data/cron/nginx"
+        ],
+        "cmd [${nodes.cp[0].id}]": [
+            "echo 'CRONDARGS=-c' > /etc/sysconfig/crond",
+            "/usr/bin/crontab -n node${nodes.cp[0].id}-${env.envName}.user.cloudjkt01.com"
+        ],
+        "api": [
+            {
+               "method": "environment.security.AddRule",
+               "params": {
+                    "envName": "${env.envName}",
+                    "rule": {
+                            "action": "ALLOW",
+                            "direction": "INPUT",
+                            "dst": "ALL",
+                            "isEnabled": true,
+                            "isInfra": true,
+                            "name": "Allow HTTPS",
+                            "ports": 443,
+                            "priority": 1015,
+                            "protocol": "ALL",
+                            "softNodeGroup": "bl",
+                            "src": "${settings.allowhttps}"  
+                    },
+                    "nodeGroup": "bl"
+               }
+            }
+        ],
+        "prepareSqlDatabase": [{
+            "nodeId": "${nodes.sqldb[0].id}",
+            "nodeGroup": "sqldb",
+            "nodeType": "mariadb-dockerized",
+            "loginCredentials": {
+                "user": "${settings.dbusername}",
+                "password": "${settings.dbpassword}"
+            },
+            "newDatabaseName": "dewawebwhmcs_db"
+        }]
+    },
+
+    "onAfterCloneNodes": {
+        "cmd [sqldb]": "echo 'UPDATE `tblconfiguration` SET `value`= \"http://${event.params.env}.dewaweb.com/\"  WHERE `setting` = \"Domain\"; UPDATE `tblconfiguration` SET `value`= \"http://${event.params.env}.dewaweb.com/\"  WHERE `setting` = \"SystemURL\"; UPDATE `tblconfiguration` SET `value`= \"http://${event.params.env}.dewaweb.com/assets/img/dewaweb-logo.png\"  WHERE `setting` = \"LogoURL\"; UPDATE `tblconfiguration` SET `value`= \"http://${event.params.env}.dewaweb.com/maintenance\" WHERE `setting` = \"MaintenanceModeURL\";' | mysql -u${settings.dbusername} -p${settings.dbpassword} ${settings.dbname}"
+    }
+}

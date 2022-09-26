@@ -41,20 +41,20 @@ actions:
       settings:
         domain: https://${response.out}
   
-  setupRedirects:
-    - script: |
-        var envs = '${globals.clusterEnvs}'.split(','),
-            actions = [];
-        for (var i = 0, n = envs.length; i < n; i ++) {
-          actions.push({
-            jps: "${baseUrl}/scripts/redirects.jps?_r=${fn.random}",
-            envName: envs[i],
-            settings: {
-              master_ip: "${nodes.cp.master.address}"
-            }  
-          });
-        }
-        return { result: 0, onAfterReturn: { install: actions } };
+#  setupRedirects:
+#    - script: |
+#        var envs = '${globals.clusterEnvs}'.split(','),
+#            actions = [];
+#        for (var i = 0, n = envs.length; i < n; i ++) {
+#          actions.push({
+#            jps: "${baseUrl}/scripts/redirects.jps?_r=${fn.random}",
+#            envName: envs[i],
+#            settings: {
+#              master_ip: "${nodes.cp.master.address}"
+#            }  
+#          });
+#        }
+#        return { result: 0, onAfterReturn: { install: actions } };
   
   shareCertificates:
     - api: env.file.Read
