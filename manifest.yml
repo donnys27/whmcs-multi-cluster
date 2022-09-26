@@ -293,7 +293,7 @@ actions:
           actions = [];
       for (var cluster = 1, n = regions.length + 1; cluster < n; cluster ++) {
         actions.push({
-          jps: "${baseUrl}/scripts/envManager.jps?_r=${fn.random}",
+          jps: "https://raw.githubusercontent.com/donnys27/whmcs-multi-cluster/main/scripts/envManager.jps?_r=${fn.random}",
           envName: "${settings.envName}-" + cluster,
           settings: {
               wp_cluster_url: "${globals.wp_cluster_url}",
