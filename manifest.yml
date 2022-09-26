@@ -129,9 +129,9 @@ onInstall:
   - initGlobals
   - setGlobals:
       domain: ${settings.envName}-1.${globals.domain-1}
-  - createEnvs    
-  - getEnvNodes
-  - installEnvsManager
+#  - createEnvs    
+#  - getEnvNodes
+#  - installEnvsManager
 
   
   - if ('${globals.db_async_topology}' == 'true'):  
