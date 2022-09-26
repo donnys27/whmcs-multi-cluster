@@ -25,7 +25,7 @@ onAfterInstallAddon [nodeGroup:bl, id:letsencrypt-ssl-addon]:
 onInstall:
   - getClusterEnvs
   - setupLEwebroot
-  - setupRedirects
+#  - setupRedirects
 
 actions:
   setupLEwebroot:
